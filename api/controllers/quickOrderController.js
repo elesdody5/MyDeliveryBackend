@@ -1,3 +1,4 @@
+const semver = require('semver');
 const AppError = require("../utils/appError");
 const User = require("./../models/userModel");
 const { format } = require("util");
@@ -158,25 +159,35 @@ exports.updateQuickOrder = catchAsync(async (req, res, next) => {
     handleUpdatingAndStoringElement("quickOrders", req, res, quickOrderId);
   }
 });
+function isUpdatedVersion(version) {
+  if (version == null || version === "") return false;
+  const latestUpdatedVersion = "1.9.0";
+  if (semver.gt(version, latestUpdatedVersion)) {
+    return true;
+  } else {
+    return false;
+  }
+}
 //@desc Get quick orders by passing deliveryId
 //@route GET /api/v1/quickOrders/quickOrdersForDelivery
 //access PUBLIC
 //Note if we didnt pass deliveryId we will get all quickorders that are not assigned for delivery
 exports.getQuickOrdersForDelivery = catchAsync(async (req, res, next) => {
   let status = req.query?.status;
+  let version = req.query.version;
   if (req.query.deliveryId) {
     let quickOrders = status
       ? await QuickOrder.find({
-          delivery: req.query.deliveryId,
-          status,
-        })
-          .populate("delivery")
-          .populate("user")
+        delivery: req.query.deliveryId,
+        status,
+      })
+        .populate("delivery")
+        .populate("user")
       : await QuickOrder.find({
-          delivery: req.query.deliveryId,
-        })
-          .populate("delivery")
-          .populate("user");
+        delivery: req.query.deliveryId,
+      })
+        .populate("delivery")
+        .populate("user");
 
     let quickOrderIds = quickOrders.map((quickOrder) => quickOrder._id);
     let foundRecords = await Record.find({
@@ -232,18 +243,21 @@ exports.getQuickOrdersForDelivery = catchAsync(async (req, res, next) => {
       });
     }
   } else {
+    if (!isUpdatedVersion(version)) {
+      return next(new AppError(ErrorMsgs.APP_NOT_UPDATED, 400));
+    }
     let quickOrders = status
       ? await QuickOrder.find({
-          delivery: null,
-          status,
-        })
-          .populate("delivery")
-          .populate("user")
+        delivery: null,
+        status,
+      })
+        .populate("delivery")
+        .populate("user")
       : await QuickOrder.find({
-          delivery: null,
-        })
-          .populate("delivery")
-          .populate("user");
+        delivery: null,
+      })
+        .populate("delivery")
+        .populate("user");
     let quickOrderIds = quickOrders.map((quickOrder) => quickOrder._id);
     let foundRecords = await Record.find({
       quickOrder: {

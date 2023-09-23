@@ -39,6 +39,8 @@ let ErrorMsgs = {
   INVALID_ORDER_ID: 'من فضلك ادخل رقم الطلب صحيحا',
 
   INVALID_QUICK_ORDERS: 'من فضلك ادخل الاودرات المراد حذفها',
+  
+  APP_NOT_UPDATED: ' يرجي التحديث لاستخدام My Delivery ',
 };
 
 module.exports = ErrorMsgs;
