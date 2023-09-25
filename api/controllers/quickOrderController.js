@@ -510,7 +510,9 @@ exports.updateQuickOrders = catchAsync(async (req, res, next) => {
 exports.getQuickOrdersByStatus = catchAsync(async (req, res, next) => {
   let quickOrders = await QuickOrder.find({ status: req.query.status })
     .populate("user")
-    .populate("delivery");
+    .populate("delivery")
+    .sort({ _id: -1 })
+    .limit(500);
 
   let quickOrderIds = quickOrders.map((quickOrder) => quickOrder._id);
   let foundRecords = await Record.find({
