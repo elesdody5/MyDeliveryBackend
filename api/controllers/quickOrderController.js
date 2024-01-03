@@ -144,7 +144,7 @@ exports.updateQuickOrder = catchAsync(async (req, res, next) => {
 
   let delivery = await User.findOne({ _id: deliveryId });
 
-  if(delivery.blocked) return next(new AppError("لقد تم حظرك يرجي تسجيل الخروج لعدم تلقي الاشعارات", 400));
+  if(delivery !== null && delivery.blocked) return next(new AppError("لقد تم حظرك يرجي تسجيل الخروج لعدم تلقي الاشعارات", 400));
 
   if (deliveryId && delivery === null) {
     return next(new AppError("لا يوجد مستخدم ", 400));
