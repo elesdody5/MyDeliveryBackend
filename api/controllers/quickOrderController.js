@@ -144,13 +144,15 @@ exports.updateQuickOrder = catchAsync(async (req, res, next) => {
 
   let delivery = await User.findOne({ _id: deliveryId });
 
+  if(delivery.blocked) return next(new AppError("لقد تم حظرك يرجي تسجيل الخروج لعدم تلقي الاشعارات", 400));
+
   if (deliveryId && delivery === null) {
     return next(new AppError("لا يوجد مستخدم ", 400));
   }
 
   if (quickOrder.delivery) {
     if (deliveryId) {
-      return next(new AppError("لقد حدث خطأ ما", 400));
+      return next(new AppError("لقد تم استلام الطلب من طيار اخر", 400));
     } else {
       handleUpdatingAndStoringElement("quickOrders", req, res, quickOrderId);
     }
