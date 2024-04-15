@@ -185,6 +185,8 @@ exports.getQuickOrdersForDelivery = catchAsync(async (req, res, next) => {
       })
         .populate("delivery")
         .populate("user")
+        .sort({ _id: -1 })
+        .limit(500)
       : await QuickOrder.find({
         delivery: req.query.deliveryId,
       })
