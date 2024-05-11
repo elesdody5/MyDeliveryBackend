@@ -488,9 +488,11 @@ exports.getQuickOrdersForUser = catchAsync(async (req, res, next) => {
 //@route patch /api/v1/quickOrders/
 //access PUBLIC
 exports.updateQuickOrders = catchAsync(async (req, res, next) => {
-  if (req.body.quickOrders.length === 0) {
+  let quickOrdersNumber = req.body.quickOrders.length;
+  if ( quickOrdersNumber === 0) {
     return next(new AppError("من فضلك ادخل الاوردرات صحيحا", 400));
   }
+  let { status , deliveryId , ordersTotalMoney ,profit} = req.query;
   let { quickOrders } = req.body;
 
   await QuickOrder.updateMany(
@@ -500,11 +502,30 @@ exports.updateQuickOrders = catchAsync(async (req, res, next) => {
       },
     },
     {
-      $set: req.query,
+      $set: { status: status},
     }
   );
+  
+  let user;
+  if (deliveryId !== null) {
+    const update = {
+      $inc: {
+        totalOrders: quickOrdersNumber,
+        totalOrdersMoney: ordersTotalMoney,
+        accountBalance: profit
+      }
+    };
+
+    user = await User.findByIdAndUpdate(
+      deliveryId,
+      update,
+      { new: true }
+    );
+
+  }
   res.status(200).json({
     status: "success",
+    user
   });
 });
 

@@ -56,6 +56,18 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: null,
   },
+  totalOrders: {
+    type: Number,
+    default: 0,
+  },
+  totalOrdersMoney: {
+    type: Number,
+    default: 0,
+  },
+  accountBalance: {
+    type: Number,
+    default: 0,
+  },
 });
 
 userSchema.pre("save", async function (next) {
