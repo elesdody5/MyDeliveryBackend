@@ -485,7 +485,7 @@ exports.getQuickOrdersForUser = catchAsync(async (req, res, next) => {
   }
 });
 //@desc Set multiple quick orders delivery to be null
-//@route patch /api/v1/quickOrders/
+//@route patch /api/v1/quickOrders/updateMultipleQuickOrders
 //access PUBLIC
 exports.updateQuickOrders = catchAsync(async (req, res, next) => {
   let quickOrdersNumber = req.body.quickOrders.length;
@@ -507,7 +507,7 @@ exports.updateQuickOrders = catchAsync(async (req, res, next) => {
   );
   
   let user;
-  if (deliveryId !== null) {
+  if (deliveryId != null) {
     const update = {
       $inc: {
         totalOrders: quickOrdersNumber,
