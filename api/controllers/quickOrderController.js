@@ -591,3 +591,62 @@ exports.getQuickOrdersByStatus = catchAsync(async (req, res, next) => {
     });
   }
 });
+
+async function getDeliveryQuickOrders(deliveryId, containsDebt) {
+  let quickOrders;
+
+  if (containsDebt) {
+    quickOrders = await QuickOrder.find({
+      delivery: deliveryId,
+      debt: { $gt: 0 } // Filter: debt greater than 0
+    })
+      .populate("delivery")
+      .populate("user")
+      .sort({ _id: -1 })
+      .limit(500);
+  } else {
+    quickOrders = await QuickOrder.find({
+      delivery: deliveryId,
+    })
+      .populate("delivery")
+      .populate("user")
+      .sort({ _id: -1 })
+      .limit(500);
+  }
+
+  const quickOrderIds = quickOrders.map((quickOrder) => quickOrder._id);
+
+  const foundRecords = await Record.find({ quickOrder: { $in: quickOrderIds } });
+
+  const data = quickOrders
+    .map((quickOrder) => {
+      const matchedRecord = foundRecords.find(
+        (foundRecord) =>
+          String(quickOrder._id) === String(foundRecord.quickOrder)
+      );
+
+      if (matchedRecord) {
+        return { ...quickOrder._doc, audio: matchedRecord.audio };
+      } else {
+        return { ...quickOrder._doc };
+      }
+    })
+    .filter(
+      (element, index, self) =>
+        index === self.findIndex((e) => e._id === element._id)
+    );
+  
+  return data;
+}
+
+//@desc Get Delivery quickorders that contains debts
+//@route GET /api/v1/debtsQuickOrders?deliveryId
+//acess PUBLIC
+exports.getDeliveryQuickOrdersDebts = catchAsync(async(req, res, next)=>{
+
+  let deliveryId = req.query.deliveryId;
+  let quickOrders = await getDeliveryQuickOrders(deliveryId,true);
+  console.log(quickOrders)
+  res.status(200).json({ status: "success", data: quickOrders});
+
+});
