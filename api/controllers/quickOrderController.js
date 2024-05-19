@@ -18,6 +18,30 @@ const storage = new Storage({
 });
 let bucket = storage.bucket("gs://delivery-app-5e621.appspot.com");
 
+async function addRecordsToQuickOrders(quickOrders){
+  const quickOrderIds = quickOrders.map((quickOrder) => quickOrder._id);
+ 
+  const foundRecords = await Record.find({ quickOrder: { $in: quickOrderIds } });
+
+  return quickOrders
+    .map((quickOrder) => {
+      const matchedRecord = foundRecords.find(
+        (foundRecord) =>
+          String(quickOrder._id) === String(foundRecord.quickOrder)
+      );
+
+      if (matchedRecord) {
+        return { ...quickOrder._doc, audio: matchedRecord.audio };
+      } else {
+        return { ...quickOrder._doc };
+      }
+    })
+    .filter(
+      (element, index, self) =>
+        index === self.findIndex((e) => e._id === element._id)
+    );
+}
+
 //@desc Add quick order and notify all delivery boys
 //@route POST /api/v1/quickOrders/
 //access PUBLIC
@@ -191,61 +215,15 @@ exports.getQuickOrdersForDelivery = catchAsync(async (req, res, next) => {
         delivery: req.query.deliveryId,
       })
         .populate("delivery")
-        .populate("user");
+        .populate("user")
+        .sort({ _id: -1 })
+        .limit(500);
 
-    let quickOrderIds = quickOrders.map((quickOrder) => quickOrder._id);
-    let foundRecords = await Record.find({
-      quickOrder: {
-        $in: quickOrderIds,
-      },
-    });
-
-    let data = [];
-    quickOrders.map((quickOrder) => {
-      for (let i = 0; i < foundRecords.length; i++) {
-        if (String(quickOrder._id) === String(foundRecords[i].quickOrder)) {
-          data.push({
-            ...quickOrder._doc,
-            audio: foundRecords[i].audio,
-          });
-        }
-      }
-    });
-    if (foundRecords.length === 0) {
+      let data = await addRecordsToQuickOrders(quickOrders);
       res.status(200).json({
         status: "success",
-        data: quickOrders,
-      });
-    } else {
-      quickOrders.map((quickOrder) => {
-        foundRecords.forEach((foundRecord) => {
-          if (String(quickOrder._id) === String(foundRecord.quickOrder)) {
-            data.push({ ...quickOrder._doc, audio: foundRecord.audio });
-          } else {
-            data.push({ ...quickOrder._doc });
-          }
-        });
-      });
-      const uniqueElements = [];
-      let filteredData = data.filter((element) => {
-        const isDuplicate = uniqueElements.includes(element._id);
-
-        if (!isDuplicate) {
-          uniqueElements.push(element._id);
-
-          return true;
-        }
-
-        return false;
-      });
-
-      res.status(200).json({
-        status: "success",
-        data: filteredData.sort(function (a, b) {
-          return new Date(b.date) - new Date(a.date);
-        }),
-      });
-    }
+        data:data});
+  
   } else {
     if (!isUpdatedVersion(version)) {
       return next(new AppError(ErrorMsgs.APP_NOT_UPDATED, 400));
@@ -257,130 +235,43 @@ exports.getQuickOrdersForDelivery = catchAsync(async (req, res, next) => {
       })
         .populate("delivery")
         .populate("user")
+        .sort({ _id: -1 })
+        .limit(500)
       : await QuickOrder.find({
         delivery: null,
       })
         .populate("delivery")
-        .populate("user");
-    let quickOrderIds = quickOrders.map((quickOrder) => quickOrder._id);
-    let foundRecords = await Record.find({
-      quickOrder: {
-        $in: quickOrderIds,
-      },
-    });
+        .populate("user")
+        .sort({ _id: -1 })
+        .limit(500);
 
-    let data = [];
-    //Adding audio to the quick orders
-    quickOrders.map((quickOrder) => {
-      for (let i = 0; i < foundRecords.length; i++) {
-        if (String(quickOrder._id) === String(foundRecords[i].quickOrder)) {
-          data.push({
-            ...quickOrder._doc,
-            audio: foundRecords[i].audio,
-          });
-        }
-      }
-    });
-
-    if (foundRecords.length === 0) {
-      res.status(200).json({
-        status: "success",
-        data: quickOrders.sort(function (a, b) {
-          return new Date(b.date) - new Date(a.date);
-        }),
-      });
-    } else {
-      quickOrders.map((quickOrder) => {
-        foundRecords.forEach((foundRecord) => {
-          if (String(quickOrder._id) === String(foundRecord.quickOrder)) {
-            data.push({ ...quickOrder._doc, audio: foundRecord.audio });
-          } else {
-            data.push({ ...quickOrder._doc });
-          }
-        });
-      });
-      const uniqueElements = [];
-      let filteredData = data.filter((element) => {
-        const isDuplicate = uniqueElements.includes(element._id);
-
-        if (!isDuplicate) {
-          uniqueElements.push(element._id);
-
-          return true;
-        }
-
-        return false;
-      });
+        let data = await addRecordsToQuickOrders(quickOrders);
 
       res.status(200).json({
         status: "success",
-        data: filteredData.sort(function (a, b) {
-          return new Date(b.date) - new Date(a.date);
-        }),
+        data: data,
       });
     }
   }
-});
+);
 //@desc Get all quick orders
 //@route GET /api/v1/quickOrders/
 //access PUBLIC
 exports.getAllQuickOrders = catchAsync(async (req, res, next) => {
   let quickOrders = await QuickOrder.find()
     .populate("user")
-    .populate("delivery");
+    .populate("delivery")
+    .sort({ _id: -1 })
+    .limit(500);
 
-  let quickOrderIds = quickOrders.map((quickOrder) => quickOrder._id);
-  let foundRecords = await Record.find({
-    quickOrder: {
-      $in: quickOrderIds,
-    },
-  });
-  let data = [];
-  quickOrders.map((quickOrder) => {
-    for (let i = 0; i < foundRecords.length; i++) {
-      if (String(quickOrder._id) === String(foundRecords[i].quickOrder)) {
-        data.push({
-          ...quickOrder._doc,
-          audio: foundRecords[i].audio,
-        });
-      }
-    }
-  });
-  if (foundRecords.length === 0) {
+    let data = await addRecordsToQuickOrders(quickOrders);
+ 
     res.status(200).json({
       status: "success",
-      data: quickOrders,
-    });
-  } else {
-    quickOrders.map((quickOrder) => {
-      foundRecords.forEach((foundRecord) => {
-        if (String(quickOrder._id) === String(foundRecord.quickOrder)) {
-          data.push({ ...quickOrder._doc, audio: foundRecord.audio });
-        } else {
-          data.push({ ...quickOrder._doc });
-        }
-      });
-    });
-    const uniqueElements = [];
-    let filteredData = data.filter((element) => {
-      const isDuplicate = uniqueElements.includes(element._id);
-
-      if (!isDuplicate) {
-        uniqueElements.push(element._id);
-
-        return true;
-      }
-
-      return false;
-    });
-    res.status(200).json({
-      status: "success",
-      data: filteredData.sort(function (a, b) {
-        return new Date(b.date) - new Date(a.date);
-      }),
+      data: data,
     });
   }
-});
+);
 
 //@desc Delete multiple quick orders
 //@route Delete /api/v1/quickOrders/
@@ -423,67 +314,19 @@ exports.getQuickOrdersForUser = catchAsync(async (req, res, next) => {
   let quickOrders = status
     ? await QuickOrder.find({ user: userId, status }).populate("delivery")
     : await QuickOrder.find({ user: userId }).populate("delivery");
-  let quickOrderIds = quickOrders.map((quickOrder) => quickOrder._id);
 
-  let foundRecords = await Record.find({
-    quickOrder: {
-      $in: quickOrderIds,
-    },
-  });
 
-  let data = [];
-  //Adding audio to the quick orders
-  quickOrders.map((quickOrder) => {
-    for (let i = 0; i < foundRecords.length; i++) {
-      if (String(quickOrder._id) === String(foundRecords[i].quickOrder)) {
-        data.push({
-          ...quickOrder._doc,
-          audio: foundRecords[i].audio,
-        });
-      }
-    }
-  });
+  let data = await addRecordsToQuickOrders(quickOrders);
 
-  if (foundRecords.length === 0) {
     res.status(200).json({
       status: "success",
       count: quickOrders.length,
-      data: quickOrders.sort(function (a, b) {
-        return new Date(b.date) - new Date(a.date);
-      }),
-    });
-  } else {
-    //Matching the Audio URL from record schema to the correlated quickorder
-    quickOrders.map((quickOrder) => {
-      foundRecords.forEach((foundRecord) => {
-        if (String(quickOrder._id) === String(foundRecord.quickOrder)) {
-          data.push({ ...quickOrder._doc, audio: foundRecord.audio });
-        } else {
-          data.push({ ...quickOrder._doc });
-        }
-      });
-    });
-    const uniqueElements = [];
-    let filteredData = data.filter((element) => {
-      const isDuplicate = uniqueElements.includes(element._id);
-
-      if (!isDuplicate) {
-        uniqueElements.push(element._id);
-
-        return true;
-      }
-
-      return false;
-    });
-    res.status(200).json({
-      status: "success",
-      count: quickOrders.length,
-      data: filteredData.sort(function (a, b) {
+      data: data.sort(function (a, b) {
         return new Date(b.date) - new Date(a.date);
       }),
     });
   }
-});
+);
 //@desc Set multiple quick orders delivery to be null
 //@route patch /api/v1/quickOrders/updateMultipleQuickOrders
 //access PUBLIC
@@ -538,65 +381,15 @@ exports.getQuickOrdersByStatus = catchAsync(async (req, res, next) => {
     .populate("delivery")
     .sort({ _id: -1 })
     .limit(500);
-
-  let quickOrderIds = quickOrders.map((quickOrder) => quickOrder._id);
-  let foundRecords = await Record.find({
-    quickOrder: {
-      $in: quickOrderIds,
-    },
-  });
-  let data = [];
-  quickOrders.map((quickOrder) => {
-    for (let i = 0; i < foundRecords.length; i++) {
-      if (String(quickOrder._id) === String(foundRecords[i].quickOrder)) {
-        data.push({
-          ...quickOrder._doc,
-          audio: foundRecords[i].audio,
-        });
-      }
-    }
-  });
-  if (foundRecords.length === 0) {
+    let data = await addRecordsToQuickOrders(quickOrders);
     res.status(200).json({
       status: "success",
-      data: quickOrders,
+      data:data
     });
-  } else {
-    quickOrders.map((quickOrder) => {
-      foundRecords.forEach((foundRecord) => {
-        if (String(quickOrder._id) === String(foundRecord.quickOrder)) {
-          data.push({ ...quickOrder._doc, audio: foundRecord.audio });
-        } else {
-          data.push({ ...quickOrder._doc });
-        }
-      });
-    });
-    const uniqueElements = [];
-    let filteredData = data.filter((element) => {
-      const isDuplicate = uniqueElements.includes(element._id);
-
-      if (!isDuplicate) {
-        uniqueElements.push(element._id);
-
-        return true;
-      }
-
-      return false;
-    });
-    res.status(200).json({
-      status: "success",
-      data: filteredData.sort(function (a, b) {
-        return new Date(b.date) - new Date(a.date);
-      }),
-    });
-  }
 });
 
-async function getDeliveryQuickOrders(deliveryId, containsDebt) {
-  let quickOrders;
-
-  if (containsDebt) {
-    quickOrders = await QuickOrder.find({
+async function getDeliveryQuickOrdersWithDebts(deliveryId) {
+   let  quickOrders = await QuickOrder.find({
       delivery: deliveryId,
       debt: { $gt: 0 } // Filter: debt greater than 0
     })
@@ -604,39 +397,9 @@ async function getDeliveryQuickOrders(deliveryId, containsDebt) {
       .populate("user")
       .sort({ _id: -1 })
       .limit(500);
-  } else {
-    quickOrders = await QuickOrder.find({
-      delivery: deliveryId,
-    })
-      .populate("delivery")
-      .populate("user")
-      .sort({ _id: -1 })
-      .limit(500);
-  }
 
-  const quickOrderIds = quickOrders.map((quickOrder) => quickOrder._id);
-
-  const foundRecords = await Record.find({ quickOrder: { $in: quickOrderIds } });
-
-  const data = quickOrders
-    .map((quickOrder) => {
-      const matchedRecord = foundRecords.find(
-        (foundRecord) =>
-          String(quickOrder._id) === String(foundRecord.quickOrder)
-      );
-
-      if (matchedRecord) {
-        return { ...quickOrder._doc, audio: matchedRecord.audio };
-      } else {
-        return { ...quickOrder._doc };
-      }
-    })
-    .filter(
-      (element, index, self) =>
-        index === self.findIndex((e) => e._id === element._id)
-    );
+      return await addRecordsToQuickOrders(quickOrders);
   
-  return data;
 }
 
 //@desc Get Delivery quickorders that contains debts
@@ -645,8 +408,7 @@ async function getDeliveryQuickOrders(deliveryId, containsDebt) {
 exports.getDeliveryQuickOrdersDebts = catchAsync(async(req, res, next)=>{
 
   let deliveryId = req.query.deliveryId;
-  let quickOrders = await getDeliveryQuickOrders(deliveryId,true);
-  console.log(quickOrders)
+  let quickOrders = await getDeliveryQuickOrdersWithDebts(deliveryId);
   res.status(200).json({ status: "success", data: quickOrders});
 
 });
