@@ -18,9 +18,9 @@ const storage = new Storage({
 });
 let bucket = storage.bucket("gs://delivery-app-5e621.appspot.com");
 
-async function addRecordsToQuickOrders(quickOrders){
+async function addRecordsToQuickOrders(quickOrders) {
   const quickOrderIds = quickOrders.map((quickOrder) => quickOrder._id);
- 
+
   const foundRecords = await Record.find({ quickOrder: { $in: quickOrderIds } });
 
   return quickOrders
@@ -168,7 +168,7 @@ exports.updateQuickOrder = catchAsync(async (req, res, next) => {
 
   let delivery = await User.findOne({ _id: deliveryId });
 
-  if(delivery !== null && delivery.blocked) return next(new AppError("لقد تم حظرك يرجي تسجيل الخروج لعدم تلقي الاشعارات", 400));
+  if (delivery !== null && delivery.blocked) return next(new AppError("لقد تم حظرك يرجي تسجيل الخروج لعدم تلقي الاشعارات", 400));
 
   if (deliveryId && delivery === null) {
     return next(new AppError("لا يوجد مستخدم ", 400));
@@ -219,11 +219,12 @@ exports.getQuickOrdersForDelivery = catchAsync(async (req, res, next) => {
         .sort({ _id: -1 })
         .limit(500);
 
-      let data = await addRecordsToQuickOrders(quickOrders);
-      res.status(200).json({
-        status: "success",
-        data:data});
-  
+    let data = await addRecordsToQuickOrders(quickOrders);
+    res.status(200).json({
+      status: "success",
+      data: data
+    });
+
   } else {
     if (!isUpdatedVersion(version)) {
       return next(new AppError(ErrorMsgs.APP_NOT_UPDATED, 400));
@@ -245,14 +246,14 @@ exports.getQuickOrdersForDelivery = catchAsync(async (req, res, next) => {
         .sort({ _id: -1 })
         .limit(500);
 
-        let data = await addRecordsToQuickOrders(quickOrders);
+    let data = await addRecordsToQuickOrders(quickOrders);
 
-      res.status(200).json({
-        status: "success",
-        data: data,
-      });
-    }
+    res.status(200).json({
+      status: "success",
+      data: data,
+    });
   }
+}
 );
 //@desc Get all quick orders
 //@route GET /api/v1/quickOrders/
@@ -264,13 +265,13 @@ exports.getAllQuickOrders = catchAsync(async (req, res, next) => {
     .sort({ _id: -1 })
     .limit(500);
 
-    let data = await addRecordsToQuickOrders(quickOrders);
- 
-    res.status(200).json({
-      status: "success",
-      data: data,
-    });
-  }
+  let data = await addRecordsToQuickOrders(quickOrders);
+
+  res.status(200).json({
+    status: "success",
+    data: data,
+  });
+}
 );
 
 //@desc Delete multiple quick orders
@@ -318,24 +319,24 @@ exports.getQuickOrdersForUser = catchAsync(async (req, res, next) => {
 
   let data = await addRecordsToQuickOrders(quickOrders);
 
-    res.status(200).json({
-      status: "success",
-      count: quickOrders.length,
-      data: data.sort(function (a, b) {
-        return new Date(b.date) - new Date(a.date);
-      }),
-    });
-  }
+  res.status(200).json({
+    status: "success",
+    count: quickOrders.length,
+    data: data.sort(function (a, b) {
+      return new Date(b.date) - new Date(a.date);
+    }),
+  });
+}
 );
 //@desc Set multiple quick orders delivery to be null
 //@route patch /api/v1/quickOrders/updateMultipleQuickOrders
 //access PUBLIC
 exports.updateQuickOrders = catchAsync(async (req, res, next) => {
   let quickOrdersNumber = req.body.quickOrders.length;
-  if ( quickOrdersNumber === 0) {
+  if (quickOrdersNumber === 0) {
     return next(new AppError("من فضلك ادخل الاوردرات صحيحا", 400));
   }
-  let { status , deliveryId , ordersTotalMoney ,profit} = req.query;
+  let { status, deliveryId, ordersTotalMoney, profit } = req.query;
   let { quickOrders } = req.body;
 
   await QuickOrder.updateMany(
@@ -345,10 +346,10 @@ exports.updateQuickOrders = catchAsync(async (req, res, next) => {
       },
     },
     {
-      $set: { status: status},
+      $set: { status: status },
     }
   );
-  
+
   let user;
   if (deliveryId != null) {
     const update = {
@@ -381,16 +382,23 @@ exports.getQuickOrdersByStatus = catchAsync(async (req, res, next) => {
     .populate("delivery")
     .sort({ _id: -1 })
     .limit(500);
-    let data = await addRecordsToQuickOrders(quickOrders);
-    res.status(200).json({
-      status: "success",
-      data:data
-    });
+  let data = await addRecordsToQuickOrders(quickOrders);
+  res.status(200).json({
+    status: "success",
+    data: data
+  });
 });
 
 async function getDeliveryQuickOrdersWithDebts(deliveryId) {
-   let  quickOrders = await QuickOrder.find({
-      delivery: deliveryId,
+  let quickOrders = deliveryId ? await QuickOrder.find({
+    delivery: deliveryId,
+    debt: { $gt: 0 } // Filter: debt greater than 0
+  })
+    .populate("delivery")
+    .populate("user")
+    .sort({ _id: -1 })
+    .limit(500)
+    : await QuickOrder.find({
       debt: { $gt: 0 } // Filter: debt greater than 0
     })
       .populate("delivery")
@@ -398,17 +406,17 @@ async function getDeliveryQuickOrdersWithDebts(deliveryId) {
       .sort({ _id: -1 })
       .limit(500);
 
-      return await addRecordsToQuickOrders(quickOrders);
-  
+  return await addRecordsToQuickOrders(quickOrders);
+
 }
 
 //@desc Get Delivery quickorders that contains debts
 //@route GET /api/v1/debtsQuickOrders?deliveryId
 //acess PUBLIC
-exports.getDeliveryQuickOrdersDebts = catchAsync(async(req, res, next)=>{
+exports.getDeliveryQuickOrdersDebts = catchAsync(async (req, res, next) => {
 
   let deliveryId = req.query.deliveryId;
   let quickOrders = await getDeliveryQuickOrdersWithDebts(deliveryId);
-  res.status(200).json({ status: "success", data: quickOrders});
+  res.status(200).json({ status: "success", data: quickOrders });
 
 });
