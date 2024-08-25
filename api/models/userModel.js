@@ -52,6 +52,12 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: null,
   },
+
+  adminBlocked: {
+    type: Boolean,
+    default: false,
+  },
+
   code: {
     type: Number,
     default: null,
