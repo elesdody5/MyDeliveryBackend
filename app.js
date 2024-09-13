@@ -6,6 +6,7 @@ const shopRouter = require("./api/routes/shopRouter");
 const categoryRouter = require("./api/routes/categoryRouter");
 const productRouter = require("./api/routes/productRouter");
 const offerRouter = require("./api/routes/offerRouter");
+const safeTransactionsRouter = require("./api/routes/safeTransactionRouter");
 const subCategoriesRouter = require("./api/routes/subCategoryRouter");
 const serviceRouter = require("./api/routes/serviceRouter");
 const favoriteRouter = require("./api/routes/favoriteRouter");
@@ -38,6 +39,7 @@ app.use("/api/v1/quickOrders", quickOrderRouter); //Request will hit this first 
 app.use("/api/v1/notifications", notificationRouter); //Request will hit this first and then match with one of notification router
 app.use("/api/v1/reviews", reviewRouter); //Request will hit this first and then match with one of review router
 app.use("/api/v1/records", recordRouter); //Request will hit this first and then match with one of record router
+app.use("/api/v1/safeTransactions", safeTransactionsRouter); //Request will hit this first and then match with one of safe router
 //If there is no matching route this middleware will be FIRED!
 app.all("*", (req, res, next) => {
   /*if next took an argument -> express will detect that there is an error and will skip all the middlewares 

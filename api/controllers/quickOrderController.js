@@ -11,6 +11,7 @@ const { sendSingleNotificationUsingFCM } = require("../utils/sendNotification");
 const { handleUpdatingAndStoringElement } = require("../utils/firebaseStorage");
 
 const { Storage } = require("@google-cloud/storage");
+const { SafeTransaction, AddingType, TransactionType } = require('../models/safeTransactionModel');
 
 const storage = new Storage({
   projectId: "delivery-app-5e621",
@@ -349,7 +350,7 @@ exports.updateQuickOrders = catchAsync(async (req, res, next) => {
       $set: { status: status },
     }
   );
-
+//Todo to be removed 
   let user;
   if (deliveryId != null) {
     const update = {
@@ -419,4 +420,54 @@ exports.getDeliveryQuickOrdersDebts = catchAsync(async (req, res, next) => {
   let quickOrders = await getDeliveryQuickOrdersWithDebts(deliveryId);
   res.status(200).json({ status: "success", data: quickOrders });
 
+});
+
+//@desc settle delivery delivered quickOrders
+//@route POST /api/v1/settleDeliveryQuickOrders?deliveryId
+//acess PUBLIC
+exports.settleDeliveryQuickOrders = catchAsync(async(req, res, next)=>{
+  let quickOrdersNumber = req.body.quickOrders.length;
+  if ( quickOrdersNumber === 0) {
+    return next(new AppError("من فضلك ادخل الاوردرات صحيحا", 400));
+  }
+  let { deliveryId, userAddedId, ordersTotalMoney ,profit} = req.query;
+  let { quickOrders } = req.body;
+
+  await QuickOrder.updateMany(
+    {
+      _id: {
+        $in: quickOrders,
+      },
+    },
+    {
+      $set: { status: "done"},
+    }
+  );
+  
+  if (deliveryId != null) {
+    const update = {
+      $inc: {
+        totalOrders: quickOrdersNumber,
+        totalOrdersMoney: ordersTotalMoney,
+        accountBalance: profit
+      }
+    };
+
+   await User.findByIdAndUpdate(
+      deliveryId,
+      update,
+      { new: true }
+    );
+    await SafeTransaction.create({
+      user:userAddedId,
+      delivery:deliveryId,
+      amount:ordersTotalMoney,
+      transactionType: TransactionType.SETTLE,
+      addingType: AddingType.DEDUCTION
+  });
+  }
+
+  res.status(200).json({
+    status: "success",
+  });
 });
