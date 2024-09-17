@@ -443,7 +443,7 @@ exports.settleDeliveryQuickOrders = catchAsync(async(req, res, next)=>{
       $set: { status: "done"},
     }
   );
-  
+  let user;
   if (deliveryId != null) {
     const update = {
       $inc: {
@@ -453,7 +453,7 @@ exports.settleDeliveryQuickOrders = catchAsync(async(req, res, next)=>{
       }
     };
 
-   await User.findByIdAndUpdate(
+   user =  await User.findByIdAndUpdate(
       deliveryId,
       update,
       { new: true }
@@ -469,5 +469,6 @@ exports.settleDeliveryQuickOrders = catchAsync(async(req, res, next)=>{
 
   res.status(200).json({
     status: "success",
+    user
   });
 });
