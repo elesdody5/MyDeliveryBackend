@@ -12,9 +12,9 @@ exports.getAllSafeTransactions = catchAsync(async (req, res, next) => {
     
 
     let totalAmount = transactions.reduce((sum, transaction) => {
-      if (transaction.AddingType === AddingType.ADDING) {
+      if (transaction.addingType === AddingType.ADDING) {
         return sum + transaction.amount; // Add the amount if it's an addition
-      } else if (transaction.addSafeTransaction === AddingType.DEDUCTION) {
+      } else if (transaction.addingType === AddingType.DEDUCTION) {
         return sum - transaction.amount; // Subtract the amount if it's a deduction
       } else {
         return sum; // If transactionType is not recognized, leave sum unchanged
