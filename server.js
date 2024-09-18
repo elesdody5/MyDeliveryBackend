@@ -10,7 +10,7 @@ const DB = process.env.DATABASE.replace(
 
 //For any global exception in the application EX: logging undefined variable
 
-if (process.env.NODE_ENV === "development") {
+if (process.env.NODE_ENV !== "development") {
   mongoose
     .connect(process.env.DATABASE_LOCAL, {
       useNewUrlParser: true,

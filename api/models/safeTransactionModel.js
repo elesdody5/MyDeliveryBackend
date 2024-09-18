@@ -32,7 +32,7 @@ const safeTransactionSchema = new mongoose.Schema({
 
   transactionType: {
     type: String,
-    enum: Object.values(TransactionType), // Enum validator
+    enum: [...Object.values(TransactionType), null], // Enum validator
   },
   addingType: {
     type: String,
