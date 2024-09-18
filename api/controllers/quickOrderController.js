@@ -463,7 +463,7 @@ exports.settleDeliveryQuickOrders = catchAsync(async(req, res, next)=>{
       delivery:deliveryId,
       amount:ordersTotalMoney,
       transactionType: TransactionType.SETTLE,
-      addingType: AddingType.DEDUCTION
+      addingType: AddingType.ADDING
   });
   }
 

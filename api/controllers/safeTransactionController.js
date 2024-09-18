@@ -25,3 +25,17 @@ exports.getAllSafeTransactions = catchAsync(async (req, res, next) => {
       transaction
     });
   });
+
+
+  exports.deleteSafeTransaction = catchAsync(async (req, res, next) => {
+    let { id } = req.query;
+
+   let transaction = await SafeTransaction.findOneAndDelete({
+      _id: id,
+    });
+
+    res.status(200).json({
+      transaction
+    });
+    
+  });
