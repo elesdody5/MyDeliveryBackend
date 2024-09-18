@@ -20,9 +20,13 @@ exports.getAllSafeTransactions = catchAsync(async (req, res, next) => {
   });
 
   exports.addSafeTransaction = catchAsync(async (req, res, next) => {
-    let transaction = await SafeTransaction.create(req.body);   
+    let transaction = await SafeTransaction.create(req.body); 
+    let createdTransaction = await SafeTransaction.findById(transaction._id) 
+    .populate("user")
+    .populate("delivery")
+
     res.status(200).json({
-      transaction
+      createdTransaction
     });
   });
 
