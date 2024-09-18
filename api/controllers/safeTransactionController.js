@@ -18,3 +18,10 @@ exports.getAllSafeTransactions = catchAsync(async (req, res, next) => {
       transactions: transactions,
     });
   });
+
+  exports.addSafeTransaction = catchAsync(async (req, res, next) => {
+    let transaction = await SafeTransaction.create(req.body);   
+    res.status(200).json({
+      transaction
+    });
+  });
