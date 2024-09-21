@@ -1,9 +1,11 @@
 const admin = require("firebase-admin");
 
-var FCM = require("fcm-node");
 
 let serviceAcc = require("../../delivery-app-5e621-firebase-adminsdk-kjin7-392a4a1fae.json");
-let fcm = new FCM(serviceAcc);
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAcc),
+});
 
 
 //This function takes notification token and payload and it sends notification to a proper device
@@ -65,15 +67,15 @@ exports.sendMultipleNotification = async (
 
 exports.sendSingleNotificationUsingFCM = async (token, data) => {
   let message = {
-    to: String(token),
+    token: String(token),
     data: data,
     notification: {},
   };
-  fcm.send(message, (err, response) => {
-    if (err) {
-      console.log("Something has gone wrong!", err);
-    } else {
-      console.log("Successfully sent with response: ", response.results);
-    }
-  });
+  try {
+    const response = await admin.messaging().send(message);
+    console.log('Successfully sent message:', response);
+  } catch (error) {
+    console.error('Error sending message:', error);
+  };
+
 };
