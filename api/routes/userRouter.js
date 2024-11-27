@@ -21,6 +21,7 @@ let {
   updateNotificationToken,
   notifyDeliveryAndShops,
   deleteUserById,
+  updateAllUsers,
   notifyAllUsers,
   notifySingleUser,
 } = require("./../controllers/userController");

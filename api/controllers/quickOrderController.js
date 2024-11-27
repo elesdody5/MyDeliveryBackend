@@ -50,8 +50,8 @@ async function addRecordsToQuickOrders(quickOrders) {
 exports.addQuickOrder = catchAsync(async (req, res, next) => {
   if (!req.file) {
     let createdElement = await QuickOrder.create(req.body);
-    const users = await User.find({ userType: "delivery" });
-    let userRegistrationTokens = users
+    const deliveries = await User.find({ userType: "delivery", "address.city": createdElement.city});
+    let userRegistrationTokens = deliveries
       .map((user) => user.notificationToken)
       .filter((token) => token);
 
@@ -83,8 +83,8 @@ exports.addQuickOrder = catchAsync(async (req, res, next) => {
     let wholeBody = { ...req.body, photo: photoUrl };
     let createdElement = await QuickOrder.create(wholeBody);
 
-    const users = await User.find({ userType: "delivery" });
-    const userRegistrationTokens = users
+    const deliveries = await User.find({ userType: "delivery", "address.city": createdElement.city});
+    const userRegistrationTokens = deliveries
       .map((user) => user.notificationToken)
       .filter((token) => token);
     // Will be sent to all the delivery in the system
@@ -202,11 +202,13 @@ function isUpdatedVersion(version) {
 exports.getQuickOrdersForDelivery = catchAsync(async (req, res, next) => {
   let status = req.query?.status;
   let version = req.query.version;
+  let city = req.headers["cityid"] || "67360845822f9777a4d8d3b3";
   if (req.query.deliveryId) {
     let quickOrders = status
       ? await QuickOrder.find({
         delivery: req.query.deliveryId,
         status,
+        city
       })
         .populate("delivery")
         .populate("user")
@@ -214,6 +216,7 @@ exports.getQuickOrdersForDelivery = catchAsync(async (req, res, next) => {
         .limit(500)
       : await QuickOrder.find({
         delivery: req.query.deliveryId,
+        city
       })
         .populate("delivery")
         .populate("user")
@@ -234,6 +237,7 @@ exports.getQuickOrdersForDelivery = catchAsync(async (req, res, next) => {
       ? await QuickOrder.find({
         delivery: null,
         status,
+        city
       })
         .populate("delivery")
         .populate("user")
@@ -241,6 +245,7 @@ exports.getQuickOrdersForDelivery = catchAsync(async (req, res, next) => {
         .limit(500)
       : await QuickOrder.find({
         delivery: null,
+        city
       })
         .populate("delivery")
         .populate("user")
@@ -260,7 +265,9 @@ exports.getQuickOrdersForDelivery = catchAsync(async (req, res, next) => {
 //@route GET /api/v1/quickOrders/
 //access PUBLIC
 exports.getAllQuickOrders = catchAsync(async (req, res, next) => {
-  let quickOrders = await QuickOrder.find()
+  let city = req.headers["cityid"] || "67360845822f9777a4d8d3b3";
+  
+  let quickOrders = await QuickOrder.find({city})
     .populate("user")
     .populate("delivery")
     .sort({ _id: -1 })
@@ -378,7 +385,8 @@ exports.updateQuickOrders = catchAsync(async (req, res, next) => {
 //@route GET /api/v1/quickOrders/status
 //access PUBLIC
 exports.getQuickOrdersByStatus = catchAsync(async (req, res, next) => {
-  let quickOrders = await QuickOrder.find({ status: req.query.status })
+  let city = req.headers["cityid"] || "67360845822f9777a4d8d3b3";
+  let quickOrders = await QuickOrder.find({status: req.query.status ,city})
     .populate("user")
     .populate("delivery")
     .sort({ _id: -1 })
@@ -391,8 +399,10 @@ exports.getQuickOrdersByStatus = catchAsync(async (req, res, next) => {
 });
 
 async function getDeliveryQuickOrdersWithDebts(deliveryId) {
+  let city = req.headers["cityid"] || "67360845822f9777a4d8d3b3";
   let quickOrders = deliveryId ? await QuickOrder.find({
     delivery: deliveryId,
+    city,
     debt: { $gt: 0 } // Filter: debt greater than 0
   })
     .populate("delivery")
