@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
 const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
-const City = require("./cityModel");
 
 const userSchema = new mongoose.Schema({
   username: {
@@ -20,11 +19,6 @@ const userSchema = new mongoose.Schema({
     },
     lattitude: {
       type: String,
-    },
-    city: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "City",
-      default: "67360845822f9777a4d8d3b3",
     },
   },
   fullAddress: {

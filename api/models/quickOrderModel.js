@@ -44,11 +44,6 @@ const quickOrderSchema = new mongoose.Schema({
   withDeliveryTime: {
     type: String,
   },
-  city: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "City",
-    default: "67360845822f9777a4d8d3b3",
-  },
 });
 
 const QuickOrder = new mongoose.model("QuickOrder", quickOrderSchema);

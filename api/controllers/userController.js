@@ -16,8 +16,7 @@ var mongoose = require("mongoose");
 //access PUBLIC
 exports.getAllUsers = catchAsync(async (req, res, next) => {
   //We pass object with key(Field we wanna return or not) : Value -> 0 dont return it with the result , 1 return it
-  let cityId = req.headers["cityid"] || "67360845822f9777a4d8d3b3";
-  let users = await User.find({"address.city":cityId}, { password: 0 });
+  let users = await User.find({}, { password: 0 });
 
   res.status(200).json({
     status: "success",
@@ -72,7 +71,6 @@ exports.getUserById = catchAsync(async (req, res, next) => {
 exports.getUserByType = catchAsync(async (req, res, next) => {
   let { userType } = req.query;
   let userTypeArray = ["user", "vendor", "delivery"];
-  let cityId = req.headers["cityid"] || "67360845822f9777a4d8d3b3";
 
   if (!userType) {
     return next(new AppError(ErrorMsgs.NO_USERTYPE, 400));
@@ -81,7 +79,7 @@ exports.getUserByType = catchAsync(async (req, res, next) => {
     ? next(new AppError(ErrorMsgs.NO_USERTYPE, 400))
     : (userType = userType);
 
-  let users = await User.find({ userType ,"address.city":cityId});
+  let users = await User.find({ userType });
 
   res.status(200).json({
     status: "success",
