@@ -1,0 +1,16 @@
+[
+   {
+     "relation": [
+       "delegate_permission/common.handle_all_urls"
+     ],
+     "target": {
+       "namespace": "android_app",
+       "package_name": "com.ilogapp",
+       "sha256_cert_fingerprints": [
+         "98:79:48:23:26:50:2D:64:C4:92:AC:D7:49:C3:C8:F0:5D:76:9A:5C:A3:3F:DE:E3:DC:67:98:BF:14:28:52:C4",
+         "6F:31:D6:89:AD:BA:B0:DF:C8:CC:57:47:01:63:4F:12:9F:BB:3B:F0:E1:94:74:2D:CC:F3:25:03:1E:F7:66:68",
+         "85:DA:04:21:9B:FA:CD:F4:8C:13:66:CB:FD:CD:05:22:63:CD:C8:E1:38:91:E5:7E:F3:E1:E2:39:28:60:20:50"
+       ]
+     }
+   }
+]
