@@ -227,9 +227,10 @@ exports.getQuickOrdersForDelivery = catchAsync(async (req, res, next) => {
     });
 
   } else {
-    if (!isUpdatedVersion(version)) {
-      return next(new AppError(ErrorMsgs.APP_NOT_UPDATED, 400));
-    }
+    //Todo need to handled in iOS
+    // if (!isUpdatedVersion(version)) {
+    //   return next(new AppError(ErrorMsgs.APP_NOT_UPDATED, 400));
+    // }
     let quickOrders = status
       ? await QuickOrder.find({
         delivery: null,
