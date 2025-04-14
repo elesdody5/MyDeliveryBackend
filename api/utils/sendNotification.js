@@ -1,10 +1,11 @@
 const admin = require("firebase-admin");
 
 
-let serviceAcc = require("../../delivery-app-5e621-d596c2c8d099");
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
 
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAcc),
+  credential: admin.credential.cert(serviceAccount),
 });
 
 
