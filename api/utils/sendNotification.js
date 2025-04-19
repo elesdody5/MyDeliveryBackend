@@ -1,6 +1,6 @@
 const admin = require("firebase-admin");
 
-
+const User = require("./../models/userModel");
 const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
 
@@ -92,7 +92,7 @@ exports.notifyDeliveryUsers = async (userType) => {
   if (uniqueTokens.length > 0) {
     await Promise.all(
       uniqueTokens.map((token) =>
-        sendSingleNotificationUsingFCM(token, {
+        exports.sendSingleNotificationUsingFCM(token, {
           userType: String(userType),
           type: "quickOrder",
         })
