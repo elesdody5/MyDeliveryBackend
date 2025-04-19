@@ -80,3 +80,23 @@ exports.sendSingleNotificationUsingFCM = async (token, data) => {
   };
 
 };
+
+exports.notifyDeliveryUsers = async (userType) => {
+  const deliveryUsers = await User.find({ userType: "delivery" });
+  const uniqueTokens = [...new Set(
+    deliveryUsers
+      .map((user) => user.notificationToken)
+      .filter(Boolean)
+  )];
+
+  if (uniqueTokens.length > 0) {
+    await Promise.all(
+      uniqueTokens.map((token) =>
+        sendSingleNotificationUsingFCM(token, {
+          userType: String(userType),
+          type: "quickOrder",
+        })
+      )
+    );
+  }
+};

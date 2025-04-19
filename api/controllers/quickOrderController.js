@@ -9,15 +9,9 @@ const Record = require("../models/recordModel");
 const cloudinary = require("../utils/cloudinaryConfiguration");
 const { sendSingleNotificationUsingFCM } = require("../utils/sendNotification");
 const { handleUpdatingAndStoringElement } = require("../utils/firebaseStorage");
-
-const { Storage } = require("@google-cloud/storage");
+const { bucket } = require("../utils/firebaseConfiguration");
 const { SafeTransaction, AddingType, TransactionType } = require('../models/safeTransactionModel');
 
-const storage = new Storage({
-  projectId: "delivery-app-5e621",
-  keyFilename: "delivery-app-5e621-firebase-adminsdk-kjin7-465d741a9b.json",
-});
-let bucket = storage.bucket("gs://delivery-app-5e621.appspot.com");
 
 async function addRecordsToQuickOrders(quickOrders) {
   const quickOrderIds = quickOrders.map((quickOrder) => quickOrder._id);
@@ -48,63 +42,34 @@ async function addRecordsToQuickOrders(quickOrders) {
 //access PUBLIC
 //NOTE we pass here the user who made the quick order in the body of the req.
 exports.addQuickOrder = catchAsync(async (req, res, next) => {
+  let createdOrder;
+
   if (!req.file) {
-    let createdElement = await QuickOrder.create(req.body);
-    const users = await User.find({ userType: "delivery" });
-    let userRegistrationTokens = users
-      .map((user) => user.notificationToken)
-      .filter((token) => token);
-
-    userRegistrationTokens = [...new Set(userRegistrationTokens)];
-
-    if (userRegistrationTokens.length > 0) {
-      for (let i = 0; i < userRegistrationTokens.length; i++) {
-        sendSingleNotificationUsingFCM(userRegistrationTokens[i], {
-          userType: String(req.query.userType),
-          type: "quickOrder",
-        });
-      }
-    }
-
-    res.status(200).json({
-      status: "success",
-      createdElement,
-    });
+    createdOrder = await QuickOrder.create(req.body);
   } else {
-    const blob = bucket.file(`quickOrders/${req.file.originalname}`);
+    const fileName = `quickOrders/${req.file.originalname}`;
+    const blob = bucket.file(fileName);
     const blobStream = blob.createWriteStream();
-    blobStream.on("finish", async () => {
-      // The public URL can be used to directly access the file via HTTP.
-      publicUrl = format(
-        `https://storage.googleapis.com/${bucket.name}/${blob.name}`
-      );
+
+    await new Promise((resolve, reject) => {
+      blobStream.on("finish", resolve);
+      blobStream.on("error", reject);
+      blobStream.end(req.file.buffer);
     });
-    let photoUrl = `https://storage.googleapis.com/${bucket.name}/quickOrders/${req.file.originalname}`;
-    let wholeBody = { ...req.body, photo: photoUrl };
-    let createdElement = await QuickOrder.create(wholeBody);
 
-    const users = await User.find({ userType: "delivery" });
-    const userRegistrationTokens = users
-      .map((user) => user.notificationToken)
-      .filter((token) => token);
-    // Will be sent to all the delivery in the system
-
-    if (userRegistrationTokens.length > 0) {
-      for (let i = 0; i < userRegistrationTokens.length; i++) {
-        sendSingleNotificationUsingFCM(userRegistrationTokens[i], {
-          userType: String(req.query.userType),
-          type: "quickOrder",
-        });
-      }
-    }
-
-    res.status(200).json({
-      status: "success",
-      createdElement,
-    });
-    blobStream.end(req.file.buffer);
+    const photoUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
+    const orderDataWithPhoto = { ...req.body, photo: photoUrl };
+    createdOrder = await QuickOrder.create(orderDataWithPhoto);
   }
+
+  await notifyDeliveryUsers(req.query.userType);
+
+  res.status(200).json({
+    status: "success",
+    createdOrder,
+  });
 });
+
 //@desc Delete quick order by passing quick order ID
 //@route DELETE /api/v1/quickOrders/
 //access PUBLIC
